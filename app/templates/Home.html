@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eWMS - Workspace Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Custom styles for the workspace map */
+        .workspace-map {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            overflow: auto;
+            position: relative;
+            background-color: #f9f9f9;
+        }
+
+        .seat, .lab, .closed-room {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ccc;
+            margin: 2px; /* Reduced margin for closer seats */
+            display: inline-block;
+            cursor: pointer;
+            position: absolute;
+            text-align: center;
+            line-height: 30px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .vacant {
+            background-color: white;
+        }
+
+        .occupied {
+            background-color: red;
+        }
+
+        .reserved {
+            background-color: grey;
+        }
+
+        .lab {
+            width: 100px; /* Adjust width for labs */
+            height: 50px; /* Adjust height for labs */
+        }
+
+        .closed-room {
+            width: 80px; /* Adjust width for closed rooms */
+            height: 80px; /* Adjust height for closed rooms */
+        }
+
+        .seat-group {
+            position: absolute;
+            display: flex;
+            flex-wrap: wrap;
+            border: 2px solid lightgrey; /* Light rectangle for grouping */
+            padding: 2px; /* Padding for closer seats */
+        }
+
+        .popup {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            pointer-events: none; /* Prevent popup from blocking hover */
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">eWMS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="/home">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/employee_list">Manage Employees</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/manage_seats">Manage Seats</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/assests">Assests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/generate_report">Generate Report</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/allocate_seat">Allocate Seats</a></li>
+                </ul>
+                <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">eWMS</a>
+                        <div class="collapse navbar-collapse">
+                            <ul class="navbar-nav ms-auto">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/logout">Logout</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1 class="mb-4">Workspace Overview</h1>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="building" class="form-label">Building:</label>
+                <select class="form-select" id="building">
+                    <option value="">Select Building</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="department" class="form-label">Department:</label>
+                <select class="form-select" id="department">
+                    <option value="">Select Department</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="floor" class="form-label">Floor:</label>
+                <select class="form-select" id="floor">
+                    <option value="">Select Floor</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="subdepartment" class="form-label">Sub-Department:</label>
+                <select class="form-select" id="subdepartment">
+                    <option value="">Select Sub-Department</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <button type="button" class="btn btn-primary" id="filterBtn">Filter</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Sub-Department Summary
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Employees:</strong> <span id="employeeCount"></span></p>
+                        <p><strong>Occupied Seats:</strong> <span id="occupiedCount"></span></p>
+                        <p><strong>Vacant Seats:</strong> <span id="vacantCount"></span></p>
+                        <p><strong>Cubicles:</strong></p>
+                        <ul>
+                            <li><strong>1-Seater:</strong> <span id="cubicle1Count">0</span></li>
+                            <li><strong>2-Seater:</strong> <span id="cubicle2Count">0</span></li>
+                            <li><strong>4-Seater:</strong> <span id="cubicle4Count">0</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        Workspace Map
+                    </div>
+                    <div class="card-body">
+                        <div class="workspace-map" id="workspaceMap"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        fetch('/api/Home/metrics')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('employeeCount').innerText = data.employeeCount;
+                        // document.getElementById('totalSeats').innerText = data.totalSeats;
+                        document.getElementById('occupiedCount').innerText = data.occupiedCount;
+                        document.getElementById('vacantCount').innerText = data.vacantCount;
+                    });
+
+        const workspaceMap = document.getElementById('workspaceMap');
+        
+
+        // Function to render the workspace map
+        function renderWorkspaceMap() {
+            workspaceMap.innerHTML = ''; // Clear existing map
+
+            // Define the workspace layout
+            const layout = [
+                // First row: 1-seater seats for managers
+                { type: 'single', x: 50, y: 50, seatNumber: 'M1' },
+                { type: 'single', x: 100, y: 50, seatNumber: 'M2' },
+                { type: 'single', x: 150, y: 50, seatNumber: 'M3' },
+                { type: 'single', x: 200, y: 50, seatNumber: 'M4' },
+                { type: 'single', x: 250, y: 50, seatNumber: 'M5' },
+                { type: 'single', x: 300, y: 50, seatNumber: 'M6' },
+                { type: 'single', x: 350, y: 50, seatNumber: 'M7' },
+                { type: 'single', x: 400, y: 50, seatNumber: 'M8' },
+
+                // Columns below first row: 4-seater seats
+                { type: 'quad', x: 50, y: 100, seatNumbers: ['4-1', '4-2', '4-3', '4-4'] },
+                { type: 'quad', x: 150, y: 100, seatNumbers: ['4-5', '4-6', '4-7', '4-8'] },
+                { type: 'quad', x: 250, y: 100, seatNumbers: ['4-9', '4-10', '4-11', '4-12'] },
+                { type: 'quad', x: 350, y: 100, seatNumbers: ['4-13', '4-14', '4-15', '4-16'] },
+                { type: 'quad', x: 450, y: 100, seatNumbers: ['4-17', '4-18', '4-19', '4-20'] }, // Additional 4-seater
+                { type: 'quad', x: 550, y: 100, seatNumbers: ['4-21', '4-22', '4-23', '4-24'] }, // Additional 4-seater
+
+                // Middle columns: 2-seater seats (vertical)
+                { type: 'double-vertical', x: 650, y: 50, seatNumbers: ['2-1', '2-2'] },
+                { type: 'double-vertical', x: 700, y: 50, seatNumbers: ['2-3', '2-4'] },
+
+                // Labs and rooms on different sides
+                { type: 'lab', x: 50, y: 300, label: 'Lab 1' }, // Lab on the left
+                { type: 'lab', x: 600, y: 50, label: 'Lab 2' }, // Lab on the right
+                { type: 'closed-room', x: 50, y: 400, label: 'Room 1' }, // Room on the left
+                { type: 'closed-room', x: 600, y: 150, label: 'Room 2' }, // Room on the right
+            ];
+
+            layout.forEach(item => {
+                if (item.type === 'single') {
+                    renderSingleSeat(item.x, item.y, item.seatNumber);
+                } else if (item.type === 'quad') {
+                    renderQuadSeat(item.x, item.y, item.seatNumbers);
+                } else if (item.type === 'double-vertical') {
+                    renderDoubleSeatVertical(item.x, item.y, item.seatNumbers);
+                } else if (item.type === 'lab') {
+                    renderLab(item.x, item.y, item.label);
+                } else if (item.type === 'closed-room') {
+                    renderClosedRoom(item.x, item.y, item.label);
+                }
+            });
+        }
+
+        // Function to render a single seat
+        function renderSingleSeat(x, y, seatNumber) {
+            const seatDiv = document.createElement('div');
+            seatDiv.classList.add('seat');
+            seatDiv.classList.add(getRandomStatus()); // Random status
+            seatDiv.style.left = `${x}px`;
+            seatDiv.style.top = `${y}px`;
+
+            // Add hover event for popup
+            seatDiv.addEventListener('mouseenter', () => {
+                showPopup(seatNumber, seatDiv.classList.contains('vacant') ? 'Vacant' :
+                    seatDiv.classList.contains('reserved') ? 'Reserved' : 'Occupied', x, y);
+            });
+
+            // Remove popup on mouse leave
+            seatDiv.addEventListener('mouseleave', () => {
+                const popup = document.querySelector('.popup');
+                if (popup) popup.remove();
+            });
+
+            workspaceMap.appendChild(seatDiv);
+        }
+
+        // Function to render a quad seat
+        function renderQuadSeat(x, y, seatNumbers) {
+            const seatGroup = document.createElement('div');
+            seatGroup.classList.add('seat-group');
+            seatGroup.style.left = `${x}px`;
+            seatGroup.style.top = `${y}px`;
+
+            seatNumbers.forEach((seatNumber, index) => {
+                const seatDiv = document.createElement('div');
+                seatDiv.classList.add('seat', getRandomStatus());
+                seatDiv.style.left = `${(index % 2) * 35}px`; // Closer seats
+                seatDiv.style.top = `${Math.floor(index / 2) * 35}px`; // Closer seats
+
+                // Add hover event for popup
+                seatDiv.addEventListener('mouseenter', () => {
+                    showPopup(seatNumber, seatDiv.classList.contains('vacant') ? 'Vacant' :
+                        seatDiv.classList.contains('reserved') ? 'Reserved' : 'Occupied', x, y);
+                });
+
+                // Remove popup on mouse leave
+                seatDiv.addEventListener('mouseleave', () => {
+                    const popup = document.querySelector('.popup');
+                    if (popup) popup.remove();
+                });
+
+                seatGroup.appendChild(seatDiv);
+            });
+
+            workspaceMap.appendChild(seatGroup);
+        }
+
+        // Function to render a double seat (vertical)
+        function renderDoubleSeatVertical(x, y, seatNumbers) {
+            const seatGroup = document.createElement('div');
+            seatGroup.classList.add('seat-group');
+            seatGroup.style.left = `${x}px`;
+            seatGroup.style.top = `${y}px`;
+
+            seatNumbers.forEach((seatNumber, index) => {
+                const seatDiv = document.createElement('div');
+                seatDiv.classList.add('seat', getRandomStatus());
+                seatDiv.style.left = `0px`;
+                seatDiv.style.top = `${index * 35}px`; // Closer seats
+
+                // Add hover event for popup
+                seatDiv.addEventListener('mouseenter', () => {
+                    showPopup(seatNumber, seatDiv.classList.contains('vacant') ? 'Vacant' :
+                        seatDiv.classList.contains('reserved') ? 'Reserved' : 'Occupied', x, y);
+                });
+
+                // Remove popup on mouse leave
+                seatDiv.addEventListener('mouseleave', () => {
+                    const popup = document.querySelector('.popup');
+                    if (popup) popup.remove();
+                });
+
+                seatGroup.appendChild(seatDiv);
+            });
+
+            workspaceMap.appendChild(seatGroup);
+        }
+
+        // Function to render a lab
+        function renderLab(x, y, label) {
+            const labDiv = document.createElement('div');
+            labDiv.classList.add('lab');
+            labDiv.classList.add(getRandomStatus()); // Random status
+            labDiv.style.left = `${x}px`;
+            labDiv.style.top = `${y}px`;
+            labDiv.textContent = label;
+
+            // Add hover event for popup
+            labDiv.addEventListener('mouseenter', () => {
+                showPopup(label, labDiv.classList.contains('vacant') ? 'Vacant' :
+                    labDiv.classList.contains('reserved') ? 'Reserved' : 'Occupied', x, y);
+            });
+
+            // Remove popup on mouse leave
+            labDiv.addEventListener('mouseleave', () => {
+                const popup = document.querySelector('.popup');
+                if (popup) popup.remove();
+            });
+
+            workspaceMap.appendChild(labDiv);
+        }
+
+        // Function to render a closed room
+        function renderClosedRoom(x, y, label) {
+            const roomDiv = document.createElement('div');
+            roomDiv.classList.add('closed-room');
+            roomDiv.classList.add(getRandomStatus()); // Random status
+            roomDiv.style.left = `${x}px`;
+            roomDiv.style.top = `${y}px`;
+            roomDiv.textContent = label;
+
+            // Add hover event for popup
+            roomDiv.addEventListener('mouseenter', () => {
+                showPopup(label, roomDiv.classList.contains('vacant') ? 'Vacant' :
+                    roomDiv.classList.contains('reserved') ? 'Reserved' : 'Occupied', x, y);
+            });
+
+            // Remove popup on mouse leave
+            roomDiv.addEventListener('mouseleave', () => {
+                const popup = document.querySelector('.popup');
+                if (popup) popup.remove();
+            });
+
+            workspaceMap.appendChild(roomDiv);
+        }
+
+        // Function to show a popup with seat/lab/room details
+        function showPopup(label, status, x, y) {
+            const popup = document.createElement('div');
+            popup.classList.add('popup');
+            popup.style.left = `${x + 40}px`; // Position popup near the seat/lab/room
+            popup.style.top = `${y - 20}px`; // Position popup above the seat/lab/room
+            popup.innerHTML = `<strong>Label:</strong> ${label}<br><strong>Status:</strong> ${status}`;
+
+            // Remove existing popup if any
+            const existingPopup = document.querySelector('.popup');
+            if (existingPopup) existingPopup.remove();
+
+            workspaceMap.appendChild(popup);
+        }
+
+        // Function to get a random status (vacant, occupied, reserved)
+        function getRandomStatus() {
+            const statuses = ['vacant', 'occupied', 'reserved'];
+            return statuses[Math.floor(Math.random() * statuses.length)];
+        }
+
+        // Render the workspace map on page load
+        renderWorkspaceMap();
+    </script>
+</body>
+</html>

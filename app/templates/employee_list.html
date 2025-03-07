@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">eWMS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/employee_list">Manage Employees</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/manage_seats">Manage Seats</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/assests">Assests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/generate_report">Generate Report</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="#">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Employee List</h2>
+            <button id="showAddFormBtn" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> New
+            </button>
+        </div>
+
+        <div id="employeeFormContainer">
+            <!-- Form will be loaded here -->
+        </div>
+
+        <table class="table" id="employeeListTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Sub-Department</th>
+                    <th>Job Grade</th>
+                    <th>Site</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Employee data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch and display employees
+        function fetchEmployees() {
+            fetch('/api/employees')
+                .then(response => response.json())
+                .then(data => {
+                    const employeeList = document.getElementById('employeeListTable').querySelector('tbody');
+                    employeeList.innerHTML = '';
+                    data.forEach(employee => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${employee.Name}</td>
+                            <td>${employee.Email}</td>
+                            <td>${employee.Department}</td>
+                            <td>${employee.SubDepartment || 'N/A'}</td>
+                            <td>${employee.JobGrade}</td>
+                            <td>${employee.Site}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning edit-btn" data-id="${employee.EmployeeID}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${employee.EmployeeID}">Delete</button>
+                            </td>
+                        `;
+                        employeeList.appendChild(row);
+                    });
+    
+                    // Attach event listeners to edit and delete buttons
+                    attachEditListeners();
+                    attachDeleteListeners();
+                });
+        }
+    
+        // Load employee form
+        document.getElementById('showAddFormBtn').addEventListener('click', () => {
+            fetch('manage_employees') // Fetch the form HTML
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('employeeFormContainer').innerHTML = html;
+                    // Attach the form submission event listener after loading
+                    attachFormSubmitListener();
+                    // Hide the employee list table
+                    document.getElementById('employeeListTable').style.display = 'none';
+                });
+        });
+    
+        // Function to attach the form submit listener
+        function attachFormSubmitListener() {
+            if (document.getElementById('employeeForm')) {
+                document.getElementById('employeeForm').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const employee = {
+                        EmployeeID: document.getElementById('employeeID') ? document.getElementById('employeeID').value : null,
+                        Name: document.getElementById('name').value,
+                        Email: document.getElementById('email').value,
+                        Department: document.getElementById('department').value,
+                        SubDepartment: document.getElementById('subDepartment').value,
+                        DeptManager: document.getElementById('deptManager').value,
+                        SubDeptManager: document.getElementById('subDeptManager').value,
+                        DeptAdministrators: document.getElementById('deptAdministrators').value,
+                        StaffCategory: document.getElementById('staffCategory').value,
+                        JobGrade: document.getElementById('jobGrade').value,
+                        Site: document.getElementById('site').value,
+                        LaptopAssetNumber: document.getElementById('laptopAssetNumber').value,
+                        LaptopSerialNumber: document.getElementById('laptopSerialNumber').value,
+                        MonitorAssetNumber: document.getElementById('monitorAssetNumber').value,
+                        MonitorSerialNumber: document.getElementById('monitorSerialNumber').value,
+                        DesktopAssetNumber: document.getElementById('desktopAssetNumber').value,
+                        DesktopSerialNumber: document.getElementById('desktopSerialNumber').value,
+                    };
+    
+                    const method = employee.EmployeeID ? 'PUT' : 'POST'; // Use PUT for update, POST for create
+                    const url = employee.EmployeeID ? `/api/employees/${employee.EmployeeID}` : '/api/employees';
+    
+                    fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(employee)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert(employee.EmployeeID ? 'Employee updated successfully!' : 'Employee added successfully!');
+                            document.getElementById('employeeForm').reset();
+                            fetchEmployees(); // Refresh the list
+                            document.getElementById('employeeListTable').style.display = '';
+                            document.getElementById('employeeFormContainer').innerHTML = ''; // Clear the form
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to save employee. Please try again.');
+                        });
+                });
+            }
+        }
+    
+        // Function to attach edit button listeners
+        function attachEditListeners() {
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const employeeId = this.getAttribute('data-id');
+                    fetch(`/api/employees/${employeeId}`)
+                        .then(response => response.json())
+                        .then(employee => {
+                            // Load the form with employee data
+                            fetch('manage_employees')
+                                .then(response => response.text())
+                                .then(html => {
+                                    document.getElementById('employeeFormContainer').innerHTML = html;
+                                    document.getElementById('employeeListTable').style.display = 'none';
+    
+                                    // Populate the form with employee data
+                                    document.getElementById('employeeID').value = employee.EmployeeID;
+                                    document.getElementById('name').value = employee.Name;
+                                    document.getElementById('email').value = employee.Email;
+                                    document.getElementById('department').value = employee.Department;
+                                    document.getElementById('subDepartment').value = employee.SubDepartment;
+                                    document.getElementById('deptManager').value = employee.DeptManager;
+                                    document.getElementById('subDeptManager').value = employee.SubDeptManager;
+                                    document.getElementById('deptAdministrators').value = employee.DeptAdministrators;
+                                    document.getElementById('staffCategory').value = employee.StaffCategory;
+                                    document.getElementById('jobGrade').value = employee.JobGrade;
+                                    document.getElementById('site').value = employee.Site;
+                                    document.getElementById('laptopAssetNumber').value = employee.LaptopAssetNumber;
+                                    document.getElementById('laptopSerialNumber').value = employee.LaptopSerialNumber;
+                                    document.getElementById('monitorAssetNumber').value = employee.MonitorAssetNumber;
+                                    document.getElementById('monitorSerialNumber').value = employee.MonitorSerialNumber;
+                                    document.getElementById('desktopAssetNumber').value = employee.DesktopAssetNumber;
+                                    document.getElementById('desktopSerialNumber').value = employee.DesktopSerialNumber;
+    
+                                    // Attach the form submission event listener
+                                    attachFormSubmitListener();
+                                });
+                        });
+                });
+            });
+        }
+    
+        // Function to attach delete button listeners
+        function attachDeleteListeners() {
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const employeeId = this.getAttribute('data-id');
+                    if (confirm('Are you sure you want to delete this employee?')) {
+                        fetch(`/api/employees/${employeeId}`, {
+                            method: 'DELETE'
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                alert('Employee deleted successfully!');
+                                fetchEmployees(); // Refresh the list
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Failed to delete employee. Please try again.');
+                            });
+                    }
+                });
+            });
+        }
+    
+        // Listen for the closeForm message
+        window.addEventListener('message', function (event) {
+            if (event.data.action === 'closeForm') {
+                document.getElementById('employeeListTable').style.display = '';
+                document.getElementById('employeeFormContainer').innerHTML = ''; // Clear the form
+                fetchEmployees(); // Refresh the employee list
+            }
+        });
+    
+        // Fetch employees on page load
+        document.addEventListener('DOMContentLoaded', fetchEmployees);
+    </script>
+</body>
+</html>

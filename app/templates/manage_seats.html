@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Seats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">eWMS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/employee_list">Manage Employees</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/manage_seats">Manage Seats</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/assests">Assests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/generate_report">Generate Report</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="#">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <h1 class="mb-4">Manage Seats</h1>
+
+       <!-- Add Seat Form -->
+        <div class="card mb-4">
+            <div class="card-header">Add Seat</div>
+            <div class="card-body">
+                <form id="addSeatForm" class="needs-validation" novalidate>
+                    <!-- Add SeatID field -->
+                    <div class="mb-3">
+                        <label for="seatID" class="form-label">Seat ID</label>
+                        <input type="number" class="form-control" id="seatID" required>
+                        <div class="invalid-feedback">Please enter a seat ID.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" required>
+                        <div class="invalid-feedback">Please enter a location.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="seatType" class="form-label">Seat Type</label>
+                        <input type="text" class="form-control" id="seatType" required>
+                        <div class="invalid-feedback">Please enter a seat type.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="areaType" class="form-label">Area Type</label>
+                        <input type="text" class="form-control" id="areaType" required>
+                        <div class="invalid-feedback">Please enter an area type.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="seatStatus" class="form-label">Seat Status</label>
+                        <input type="text" class="form-control" id="seatStatus" required>
+                        <div class="invalid-feedback">Please enter a seat status.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Seat</button>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- Seat List -->
+        <div class="card">
+            <div class="card-header">Seat List</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>SeatID</th>
+                            <th>Location</th>
+                            <th>SeatType</th>
+                            <th>AreaType</th>
+                            <th>SeatStatus</th>
+                            
+                            <!-- <th>Actions</th> -->
+                        </tr>
+                    </thead>
+                    <tbody id="seatList">
+                        <!-- Seat rows will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch and display seats
+        function fetchSeats() {
+            fetch('/api/seats')
+                .then(response => response.json())
+                .then(data => {
+                    const seatList = document.getElementById('seatList');
+                    seatList.innerHTML = ''; // Clear existing rows
+                    data.forEach(seat => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${seat.seatID}</td>
+                            <td>${seat.location}</td>
+                            <td>${seat.type}</td>
+                            <td>${seat.areatype}</td>
+                            <td>${seat.status}</td>
+                           
+                            
+                            <td>
+                                <button class="btn btn-sm btn-warning">Edit</button>
+                                <button class="btn btn-sm btn-danger">Delete</button>
+                            </td>
+                        `;
+                        seatList.appendChild(row);
+                    });
+                });
+        }
+
+        // Add Seat Form Submission
+        document.getElementById('addSeatForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const seat = {
+                SeatID: parseInt(document.getElementById('seatID').value), // Include SeatID
+                Location: document.getElementById('location').value,
+                SeatType: document.getElementById('seatType').value,
+                AreaType: document.getElementById('areaType').value,
+                SeatStatus: document.getElementById('seatStatus').value
+            };
+
+            fetch('/api/seats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(seat)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Seat added successfully!');
+                e.target.reset();
+                fetchSeats(); // Refresh the list
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add seat. Please try again.');
+            });
+        });
+        // Delete Seat
+        // document.getElementById('seatList').addEventListener('click', function (e) {
+        //     if (e.target.classList.contains('btn-danger')) {
+        //         const seatId = e.target.closest('tr').querySelector('td').innerText;
+        //         fetch(/api/seats/${SeatId}, { method: 'DELETE' })
+        //             .then(response => {
+        //                 if (response.ok) {
+        //                     alert('Seat deleted successfully!');
+        //                     fetchSeats(); // Refresh the list
+        //                 } else {
+        //                     alert('Failed to delete seat.');
+        //                 }
+        //             })
+        //             .catch(error => {
+        //                 console.error('Error:', error);
+        //             });
+        //     }
+        // });
+
+        // Fetch seats on page load
+        document.addEventListener('DOMContentLoaded', fetchSeats);
+    </script>
+</body>
+</html>

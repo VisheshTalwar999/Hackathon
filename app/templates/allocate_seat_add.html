@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocate Seat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Allocate Seat</h2>
+
+        <form id="allocateSeatForm">
+            <div class="mb-3">
+                <label for="allocationID" class="form-label">Allocation ID</label>
+                <input type="text" class="form-control" id="allocationID" name="allocationID" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="seatID" class="form-label">Seat ID</label>
+                <input type="text" class="form-control" id="seatID" name="seatID" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="employeeID" class="form-label">Employee ID</label>
+                <input type="text" class="form-control" id="employeeID" name="employeeID" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="allocationDate" class="form-label">Allocation Date</label>
+                <input type="datetime-local" class="form-control" id="allocationDate" name="allocationDate" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status" required>
+                    <option value="Active">Active</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+
+    <script>
+    function allocateSeats() {
+                fetch('/api/employees')
+                    .then(response => response.json())
+                    .then(data => {
+                        const seatList = document.getElementById('seatList');
+                        seatList.innerHTML = ''; // Clear existing rows
+                        data.forEach(seat => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${seat.seatID}</td>
+                                <td>${seat.location}</td>
+                                <td>${seat.type}</td>
+                                <td>${seat.areatype}</td>
+                                <td>${seat.status}</td>
+                            
+                                
+                                <td>
+                                    <button class="btn btn-sm btn-warning">Edit</button>
+                                    <button class="btn btn-sm btn-danger">Delete</button>
+                                </td>
+                            `;
+                            seatList.appendChild(row);
+                        });
+                    });
+            }
+
+        // Allocate Seat Form Submission
+        document.getElementById('allocateSeatForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const seatAllocation = {
+                AllocationID: document.getElementById('allocationID').value,
+                SeatID: document.getElementById('seatID').value,
+                EmployeeID: document.getElementById('employeeID').value,
+                AllocationDate: document.getElementById('allocationDate').value,
+                Status: document.getElementById('status').value,
+            };
+
+            fetch('/api/seat_allocations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(seatAllocation)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Seat allocated successfully!');
+                // Reset the form
+                document.getElementById('allocateSeatForm').reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to allocate seat. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<div class="container mt-5">
+    <h2>Employee Management</h2>
+
+    <form id="employeeForm">
+        <div class="mb-3">
+            <label for="employeeID" class="form-label">EmployeeId</label>
+            <input type="text" class="form-control" id="employeeID" name="employeeID" required>
+        </div>
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="department" class="form-label">Department</label>
+            <input type="text" class="form-control" id="department" name="department" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="subDepartment" class="form-label">Sub-Department</label>
+            <input type="text" class="form-control" id="subDepartment" name="subDepartment">
+        </div>
+
+        <div class="mb-3">
+            <label for="deptManager" class="form-label">Department Manager</label>
+            <input type="text" class="form-control" id="deptManager" name="deptManager">
+        </div>
+
+        <div class="mb-3">
+            <label for="subDeptManager" class="form-label">Sub-Department Manager</label>
+            <input type="text" class="form-control" id="subDeptManager" name="subDeptManager">
+        </div>
+
+        <div class="mb-3">
+            <label for="deptAdministrators" class="form-label">Department Administrators</label>
+            <input type="text" class="form-control" id="deptAdministrators" name="deptAdministrators">
+        </div>
+
+        <div class="mb-3">
+            <label for="staffCategory" class="form-label">Staff Category</label>
+            <select class="form-select" id="staffCategory" name="staffCategory" required>
+                <option value="Employee">Employee</option>
+                <option value="Intern">Intern</option>
+                <option value="SubCon">SubCon</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="jobGrade" class="form-label">Job Grade</label>
+            <input type="text" class="form-control" id="jobGrade" name="jobGrade" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="site" class="form-label">Site</label>
+            <input type="text" class="form-control" id="site" name="site" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="laptopAssetNumber" class="form-label">Laptop Asset Number</label>
+            <input type="text" class="form-control" id="laptopAssetNumber" name="laptopAssetNumber">
+        </div>
+
+        <div class="mb-3">
+            <label for="laptopSerialNumber" class="form-label">Laptop Serial Number</label>
+            <input type="text" class="form-control" id="laptopSerialNumber" name="laptopSerialNumber">
+        </div>
+
+        <div class="mb-3">
+            <label for="monitorAssetNumber" class="form-label">Monitor Asset Number</label>
+            <input type="text" class="form-control" id="monitorAssetNumber" name="monitorAssetNumber">
+        </div>
+
+        <div class="mb-3">
+            <label for="monitorSerialNumber" class="form-label">Monitor Serial Number</label>
+            <input type="text" class="form-control" id="monitorSerialNumber" name="monitorSerialNumber">
+        </div>
+
+        <div class="mb-3">
+            <label for="desktopAssetNumber" class="form-label">Desktop Asset Number</label>
+            <input type="text" class="form-control" id="desktopAssetNumber" name="desktopAssetNumber">
+        </div>
+
+        <div class="mb-3">
+            <label for="desktopSerialNumber" class="form-label">Desktop Serial Number</label>
+            <input type="text" class="form-control" id="desktopSerialNumber" name="desktopSerialNumber">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+<script>
+    // Add Employee Form Submission
+    document.getElementById('employeeForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const employee = {
+            EmployeeID: document.getElementById('employeeID').value,
+            Name: document.getElementById('name').value,
+            Email: document.getElementById('email').value,
+            Department: document.getElementById('department').value,
+            SubDepartment: document.getElementById('subDepartment').value,
+            DeptManager: document.getElementById('deptManager').value,
+            SubDeptManager: document.getElementById('subDeptManager').value,
+            DeptAdministrators: document.getElementById('deptAdministrators').value,
+            StaffCategory: document.getElementById('staffCategory').value,
+            JobGrade: document.getElementById('jobGrade').value,
+            Site: document.getElementById('site').value,
+            LaptopAssetNumber: document.getElementById('laptopAssetNumber').value,
+            LaptopSerialNumber: document.getElementById('laptopSerialNumber').value,
+            MonitorAssetNumber: document.getElementById('monitorAssetNumber').value,
+            MonitorSerialNumber: document.getElementById('monitorSerialNumber').value,
+            DesktopAssetNumber: document.getElementById('desktopAssetNumber').value,
+            DesktopSerialNumber: document.getElementById('desktopSerialNumber').value,
+        };
+
+        fetch('/api/employees', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(employee)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Employee added successfully!');
+            // Reset the form
+            document.getElementById('employeeForm').reset();
+            // Close the form and show the employee list
+            window.parent.postMessage({ action: 'closeForm' }, '*');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add employee. Please try again.');
+        });
+    });
+</script>

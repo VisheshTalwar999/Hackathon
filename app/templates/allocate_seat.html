@@ -1,0 +1,71 @@
+<!-- Updated manage_seats.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocate Seat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">Manage Seats</h1>
+        
+        <!-- Allocate Seats Button -->
+        <button id="allocateSeats" class="btn btn-success mb-3">Allocate Seats</button>
+
+         <!-- Seat Allocation Form Container -->
+         <div id="seatFormContainer"></div>
+        
+        <!-- Allocated Seats Table -->
+        <div class="card">
+            <div class="card-header">Allocated Seats</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Seat ID</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allocatedSeatsList">
+                        <!-- Allocated seats will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('allocateSeats').addEventListener('click', function () {
+            fetch('/allocate_seat_add') // Fetch the allocate seat form
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('seatFormContainer').innerHTML = html;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        function fetchAllocatedSeats() {
+            fetch('/api/allocated_seats')
+                .then(response => response.json())
+                .then(data => {
+                    const allocatedSeatsList = document.getElementById('allocatedSeatsList');
+                    allocatedSeatsList.innerHTML = '';
+                    data.forEach(seat => {
+                        const row = `<tr>
+                            <td>${seat.employee_id}</td>
+                            <td>${seat.seat_id}</td>
+                            <td>${seat.status}</td>
+                        </tr>`;
+                        allocatedSeatsList.innerHTML += row;
+                    });
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchAllocatedSeats);
+    </script>
+</body>
+</html>

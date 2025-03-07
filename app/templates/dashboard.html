@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Management Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">eWMS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/employee_list">Manage Employees</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/manage_seats">Manage Seats</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/assests">Assests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/generate_report">Generate Report</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="#">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <h1 class="mb-4">Workspace Management Dashboard</h1>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Employees</h5>
+                        <p class="card-text" id="totalEmployees">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Seats</h5>
+                        <p class="card-text" id="totalSeats">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Occupied Seats</h5>
+                        <p class="card-text" id="occupiedSeats">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">Vacant Seats</h5>
+                        <p class="card-text" id="vacantSeats">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Floor Map -->
+        <div class="card mb-4">
+            <div class="card-header">Visual Floor Map</div>
+            <div class="card-body">
+                <div id="floorMap" style="height: 300px; background-color: #f0f0f0;">
+                    <!-- Floor map visualization will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+            <a href="/employee_list" class="btn btn-primary me-md-2">Add Employee</a>
+            <a href="/manage_seats" class="btn btn-success">Add Seat</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch and display dashboard metrics
+        fetch('/api/dashboard/metrics')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalEmployees').innerText = data.totalEmployees;
+                document.getElementById('totalSeats').innerText = data.totalSeats;
+                document.getElementById('occupiedSeats').innerText = data.occupiedSeats;
+                document.getElementById('vacantSeats').innerText = data.vacantSeats;
+            });
+
+        // Fetch and display floor map
+        fetch('/api/seats')
+            .then(response => response.json())
+            .then(data => {
+                const floorMap = document.getElementById('floorMap');
+                data.forEach(seat => {
+                    const seatElement = document.createElement('div');
+                    seatElement.className = `seat ${seat.status.toLowerCase()}`;
+                    seatElement.innerText = seat.location;
+                    floorMap.appendChild(seatElement);
+                });
+            });
+    </script>
+</body>
+</html>
